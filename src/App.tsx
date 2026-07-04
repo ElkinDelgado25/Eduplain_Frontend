@@ -1,9 +1,12 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { convertPdfToMarkdown } from './api/documents'
+import { fetchHealth } from './api/health'
 import type { PdfToMarkdownResponse } from './types/documents'
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
+type BackendStatus = 'checking' | 'connected' | 'disconnected'
 
 function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -11,6 +14,30 @@ function App() {
   const [result, setResult] = useState<PdfToMarkdownResponse | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking')
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function checkBackend() {
+      try {
+        await fetchHealth()
+        if (!cancelled) {
+          setBackendStatus('connected')
+        }
+      } catch {
+        if (!cancelled) {
+          setBackendStatus('disconnected')
+        }
+      }
+    }
+
+    void checkBackend()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const fileStatus = getFileStatus(selectedFile, result, errorMessage, isUploading)
 
@@ -89,6 +116,12 @@ function App() {
         <p className="subtitle">
           Convierte un sílabo PDF en Markdown para validar el procesamiento
           inicial.
+        </p>
+        <p className="backend-status" aria-live="polite">
+          Backend:{' '}
+          <span className={`status-pill status-pill--${backendStatus}`}>
+            {getBackendStatusLabel(backendStatus)}
+          </span>
         </p>
       </header>
 
@@ -214,6 +247,18 @@ function App() {
       </section>
     </main>
   )
+}
+
+function getBackendStatusLabel(status: BackendStatus): string {
+  if (status === 'checking') {
+    return 'Comprobando...'
+  }
+
+  if (status === 'connected') {
+    return 'Conectado'
+  }
+
+  return 'Sin conexión'
 }
 
 function validatePdfFile(file: File): string | null {

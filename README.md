@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Eduplain Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React + TypeScript + Vite para Eduplain. El primer módulo disponible es **Syllabus Lab**: sube un PDF y consume la API Django para convertirlo a Markdown.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- [Bun](https://bun.sh/) 1.3+
+- Backend [`EduPlain_Backend`](https://github.com/ElkinDelgado25/EduPlain_Backend) en ejecución local
 
-## React Compiler
+## Inicio rápido
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Backend (Aspire)
 
-## Expanding the ESLint configuration
+Desde el repo backend:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+docker compose down
+dotnet build .\aspire\Eduplain.AppHost\Eduplain.AppHost.csproj
+aspire run --apphost .\aspire\Eduplain.AppHost
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Django queda en `http://localhost:8000`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 2. Frontend
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+Copy-Item .env.example .env
+bun install
+bun dev
 ```
+
+Vite abre `http://localhost:5173` y proxifica `/api` hacia `http://localhost:8000`.
+
+## Variables de entorno
+
+| Variable | Uso |
+|---|---|
+| `VITE_API_BASE_URL` | URL base del backend. Déjela vacía en dev para usar el proxy de Vite. |
+| `VITE_API_BASIC_USERNAME` | Usuario Django para endpoints protegidos (desarrollo). |
+| `VITE_API_BASIC_PASSWORD` | Contraseña del usuario bootstrap local. |
+
+Use las mismas credenciales que `EDUPLAIN_BOOTSTRAP_ADMIN_*` en el backend.
+
+**Importante:** no incluya credenciales reales en builds de producción. OAuth llegará en una fase posterior.
+
+## Verificación
+
+1. El encabezado muestra **Backend: Conectado** si `GET /api/health/` responde.
+2. Suba un PDF de prueba y confirme que aparece el Markdown generado.
+3. Si aparece error de autenticación, revise `VITE_API_BASIC_*` en `.env`.
+
+## Scripts
+
+```powershell
+bun dev       # servidor de desarrollo
+bun run build # build de producción
+bun run lint  # ESLint
+```
+
+## API compartida
+
+- `src/api/client.ts` — cliente HTTP con auth básica opcional
+- `src/api/health.ts` — health check público
+- `src/api/documents.ts` — conversión PDF → Markdown
+
+Extienda `src/api/` para nuevas pantallas sin reconfigurar la conexión.
+
+## Documentación backend
+
+- [docs/api.md](https://github.com/ElkinDelgado25/EduPlain_Backend/blob/main/docs/api.md) — CORS, auth y flujo local
+- [docs/endpoints.md](https://github.com/ElkinDelgado25/EduPlain_Backend/blob/main/docs/endpoints.md) — contrato HTTP
