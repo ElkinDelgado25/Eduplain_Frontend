@@ -1,81 +1,40 @@
 import type { PdfToMarkdownResponse } from '../types/documents'
+import {
+  ApiRequestError,
+  apiFetch,
+  getHttpErrorMessage,
+  readJson,
+} from './client'
 
 const PDF_TO_MARKDOWN_PATH = '/api/documents/pdf-to-markdown/'
 
-type ErrorPayload = {
-  detail?: unknown
-  error?: unknown
-  message?: unknown
-}
-
-export class ApiRequestError extends Error {
-  readonly status?: number
-
-  constructor(message: string, status?: number) {
-    super(message)
-    this.name = 'ApiRequestError'
-    this.status = status
-  }
-}
+export { ApiRequestError } from './client'
 
 export async function convertPdfToMarkdown(
   file: File,
 ): Promise<PdfToMarkdownResponse> {
-  try {
-    const apiBaseUrl = getApiBaseUrl()
-    const formData = new FormData()
-    formData.append('file', file)
+  const formData = new FormData()
+  formData.append('file', file)
 
-    const response = await fetch(`${apiBaseUrl}${PDF_TO_MARKDOWN_PATH}`, {
-      method: 'POST',
-      body: formData,
-    })
+  const response = await apiFetch(PDF_TO_MARKDOWN_PATH, {
+    method: 'POST',
+    body: formData,
+  })
 
-    const data = await readJson(response)
+  const data = await readJson(response)
 
-    if (!response.ok) {
-      throw new ApiRequestError(
-        getHttpErrorMessage(response.status, data),
-        response.status,
-      )
-    }
-
-    if (!isPdfToMarkdownResponse(data)) {
-      throw new ApiRequestError(
-        'El backend respondió con un formato inesperado.',
-      )
-    }
-
-    return data
-  } catch (error) {
-    if (error instanceof ApiRequestError) {
-      throw error
-    }
-
+  if (!response.ok) {
     throw new ApiRequestError(
-      'Conexión fallida: no se pudo contactar al backend Django. Verifica que esté corriendo en VITE_API_BASE_URL.',
-    )
-  }
-}
-
-function getApiBaseUrl(): string {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
-
-  if (!apiBaseUrl) {
-    throw new ApiRequestError(
-      'Falta configurar VITE_API_BASE_URL en el entorno de Vite.',
+      getPdfHttpErrorMessage(response.status, data),
+      response.status,
     )
   }
 
-  return apiBaseUrl.replace(/\/+$/, '')
-}
-
-async function readJson(response: Response): Promise<unknown> {
-  try {
-    return await response.json()
-  } catch {
-    return null
+  if (!isPdfToMarkdownResponse(data)) {
+    throw new ApiRequestError('El backend respondió con un formato inesperado.')
   }
+
+  return data
 }
 
 function isPdfToMarkdownResponse(
@@ -94,47 +53,34 @@ function isPdfToMarkdownResponse(
   )
 }
 
-function getHttpErrorMessage(status: number, data: unknown): string {
-  const backendMessage = getBackendMessage(data)
-
+function getPdfHttpErrorMessage(status: number, data: unknown): string {
   if (status === 400) {
-    return withBackendMessage(
+    return getHttpErrorMessage(
+      status,
+      data,
       'El backend no pudo procesar el PDF. Revisa que sea un archivo válido.',
-      backendMessage,
     )
   }
 
   if (status === 413) {
-    return withBackendMessage(
+    return getHttpErrorMessage(
+      status,
+      data,
       'El PDF supera el límite permitido por el backend. Usa un archivo menor a 10 MB.',
-      backendMessage,
     )
   }
 
   if (status === 500) {
-    return withBackendMessage(
+    return getHttpErrorMessage(
+      status,
+      data,
       'Ocurrió un error interno en el backend al convertir el PDF.',
-      backendMessage,
     )
   }
 
-  return withBackendMessage(
+  return getHttpErrorMessage(
+    status,
+    data,
     `No se pudo convertir el PDF. El backend respondió con HTTP ${status}.`,
-    backendMessage,
   )
-}
-
-function getBackendMessage(data: unknown): string | null {
-  if (!data || typeof data !== 'object') {
-    return null
-  }
-
-  const payload = data as ErrorPayload
-  const message = payload.detail ?? payload.error ?? payload.message
-
-  return typeof message === 'string' && message.trim() ? message : null
-}
-
-function withBackendMessage(message: string, backendMessage: string | null): string {
-  return backendMessage ? `${message} Detalle: ${backendMessage}` : message
 }

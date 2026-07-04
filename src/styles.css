@@ -229,6 +229,27 @@ h2 {
   padding: 5px 10px;
 }
 
+.backend-status {
+  margin: 12px 0 0;
+  color: #4d596c;
+  font-size: 0.95rem;
+}
+
+.status-pill--checking {
+  background: #eef1f6;
+  color: #5f6b7d;
+}
+
+.status-pill--connected {
+  background: #e5f7ed;
+  color: #1f7a45;
+}
+
+.status-pill--disconnected {
+  background: #fdebec;
+  color: #b42318;
+}
+
 .empty-state {
   margin: 0;
   color: #6a7587;
