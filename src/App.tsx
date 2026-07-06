@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { convertPdfToMarkdown } from './api/documents'
 import { fetchHealth } from './api/health'
 import type { PdfToMarkdownResponse } from './types/documents'
@@ -7,6 +8,7 @@ import type { PdfToMarkdownResponse } from './types/documents'
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 type BackendStatus = 'checking' | 'connected' | 'disconnected'
+type OutputView = 'preview' | 'raw'
 
 function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -15,6 +17,8 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking')
+  const [outputView, setOutputView] = useState<OutputView>('preview')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -85,6 +89,8 @@ function App() {
     try {
       const conversion = await convertPdfToMarkdown(selectedFile)
       setResult(conversion)
+      setOutputView('preview')
+      setCopied(false)
     } catch (error) {
       setResult(null)
       setErrorMessage(
@@ -102,9 +108,25 @@ function App() {
     setResult(null)
     setErrorMessage(null)
     setIsUploading(false)
+    setOutputView('preview')
+    setCopied(false)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleCopy() {
+    if (!result) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(result.markdown)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
     }
   }
 
@@ -229,14 +251,60 @@ function App() {
             ) : null}
           </div>
 
+          {result && !isUploading ? (
+            <div className="output-toolbar">
+              <div
+                className="view-toggle"
+                role="tablist"
+                aria-label="Modo de visualización"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={outputView === 'preview'}
+                  className={`view-toggle-button${outputView === 'preview' ? ' is-active' : ''}`}
+                  onClick={() => setOutputView('preview')}
+                >
+                  Vista previa
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={outputView === 'raw'}
+                  className={`view-toggle-button${outputView === 'raw' ? ' is-active' : ''}`}
+                  onClick={() => setOutputView('raw')}
+                >
+                  Markdown
+                </button>
+              </div>
+              <button
+                type="button"
+                className="button button-secondary button-compact"
+                onClick={handleCopy}
+              >
+                {copied ? 'Copiado' : 'Copiar Markdown'}
+              </button>
+            </div>
+          ) : null}
+
           {isUploading ? (
             <div className="markdown-placeholder" role="status">
+              <span className="spinner" aria-hidden="true" />
               Procesando el PDF en el backend...
             </div>
           ) : result ? (
-            <pre className="markdown-output" aria-label="Markdown convertido">
-              <code>{result.markdown}</code>
-            </pre>
+            outputView === 'preview' ? (
+              <div
+                className="markdown-preview"
+                aria-label="Markdown convertido (vista previa)"
+              >
+                <ReactMarkdown>{result.markdown}</ReactMarkdown>
+              </div>
+            ) : (
+              <pre className="markdown-output" aria-label="Markdown convertido">
+                <code>{result.markdown}</code>
+              </pre>
+            )
           ) : (
             <div className="markdown-placeholder">
               El Markdown devuelto por el backend aparecerá aquí después de la
