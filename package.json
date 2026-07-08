@@ -13,11 +13,8 @@
   "dependencies": {
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-<<<<<<< HEAD
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.1"
-=======
-    "react-markdown": "^10.1.0"
->>>>>>> f608d772730c4bc8fe19759e32558aaa1c51543c
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
