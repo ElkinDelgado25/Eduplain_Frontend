@@ -31,6 +31,13 @@ bun dev
 
 Vite abre `http://localhost:5173` y proxifica `/api` hacia `http://localhost:8000`.
 
+## Rutas
+
+| Ruta | Página |
+|---|---|
+| `/` | Landing Page con CTA hacia la app |
+| `/syllabus-lab` | Syllabus Lab (Home): conversor PDF → Markdown |
+
 ## Variables de entorno
 
 | Variable | Uso |
@@ -45,9 +52,10 @@ Use las mismas credenciales que `EDUPLAIN_BOOTSTRAP_ADMIN_*` en el backend.
 
 ## Verificación
 
-1. El encabezado muestra **Backend: Conectado** si `GET /api/health/` responde.
-2. Suba un PDF de prueba y confirme que aparece el Markdown generado.
-3. Si aparece error de autenticación, revise `VITE_API_BASIC_*` en `.env`.
+1. Abra `http://localhost:5173/` y confirme la Landing Page con el botón **Entrar a Syllabus Lab**.
+2. En `/syllabus-lab`, el encabezado muestra **Backend: Conectado** si `GET /api/health/` responde.
+3. Suba un PDF de prueba y confirme que aparece el Markdown generado.
+4. Si aparece error de autenticación, revise `VITE_API_BASIC_*` en `.env`.
 
 ## Scripts
 
