@@ -43,10 +43,10 @@ Vite abre `http://localhost:5173` y proxifica `/api` hacia `http://localhost:800
 | Variable | Uso |
 |---|---|
 | `VITE_API_BASE_URL` | URL base del backend. Déjela vacía en dev para usar el proxy de Vite. |
-| `VITE_API_BASIC_USERNAME` | Usuario Django para endpoints protegidos (desarrollo). |
-| `VITE_API_BASIC_PASSWORD` | Contraseña del usuario bootstrap local. |
+| `VITE_API_BASIC_USERNAME` | Usuario Django para endpoints protegidos (opcional para Syllabus Lab). |
+| `VITE_API_BASIC_PASSWORD` | Contraseña del usuario bootstrap local (opcional para Syllabus Lab). |
 
-Use las mismas credenciales que `EDUPLAIN_BOOTSTRAP_ADMIN_*` en el backend.
+Use las mismas credenciales que `EDUPLAIN_BOOTSTRAP_ADMIN_*` en el backend cuando consuma endpoints protegidos. Syllabus Lab no las requiere.
 
 **Importante:** no incluya credenciales reales en builds de producción. OAuth llegará en una fase posterior.
 
@@ -55,7 +55,7 @@ Use las mismas credenciales que `EDUPLAIN_BOOTSTRAP_ADMIN_*` en el backend.
 1. Abra `http://localhost:5173/` y confirme la Landing Page con el botón **Entrar a Syllabus Lab**.
 2. En `/syllabus-lab`, el encabezado muestra **Backend: Conectado** si `GET /api/health/` responde.
 3. Suba un PDF de prueba y confirme que aparece el Markdown generado.
-4. Si aparece error de autenticación, revise `VITE_API_BASIC_*` en `.env`.
+4. Si un endpoint protegido devuelve error de autenticación, revise `VITE_API_BASIC_*` en `.env`.
 
 ## Scripts
 
