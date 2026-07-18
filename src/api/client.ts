@@ -71,9 +71,44 @@ export function getBackendMessage(data: unknown): string | null {
   }
 
   const payload = data as ErrorPayload
-  const message = payload.detail ?? payload.error ?? payload.message
+  const message = getStringMessage(payload.detail ?? payload.error ?? payload.message)
 
-  return typeof message === 'string' && message.trim() ? message : null
+  if (message) {
+    return message
+  }
+
+  for (const [field, value] of Object.entries(data)) {
+    const fieldMessage = getStringMessage(value)
+
+    if (!fieldMessage) {
+      continue
+    }
+
+    return field === 'non_field_errors'
+      ? fieldMessage
+      : `${field}: ${fieldMessage}`
+  }
+
+  return null
+}
+
+function getStringMessage(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed || null
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const message = getStringMessage(item)
+
+      if (message) {
+        return message
+      }
+    }
+  }
+
+  return null
 }
 
 export function withBackendMessage(
