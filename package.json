@@ -11,10 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "cobe": "^2.0.1",
+    "flag-icons": "^7.5.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.1",
+    "simple-icons": "^16.26.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
